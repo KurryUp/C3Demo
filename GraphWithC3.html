@@ -1,0 +1,14 @@
+<head>
+	<title>NYPD Collisions</title>
+</head>
+
+<body>
+	<h1>NYPD Collision Statistics</h1> {{> nypdData}} </body>
+<template name="nypdData">
+	<div id="chart"></div>
+	<form class="updateChart">
+		<input type="number" name="limit" placeholder="number of records" />
+		<input type="date" name="date" placeholder="date" />
+		<input type="submit" value="Update">
+  </form>
+</template>
