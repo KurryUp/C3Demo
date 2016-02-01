@@ -7,28 +7,26 @@ var updateChart = function(chart, data) {
 		}
 
 		// converting strings to numbers
-		item.number_of_cyclist_injured = Number(item.number_of_cyclist_injured);
-		item.number_of_cyclist_killed = Number(item.number_of_cyclist_killed);
-		item.number_of_motorist_injured = Number(item.number_of_motorist_injured);
-		item.number_of_motorist_killed = Number(item.number_of_motorist_killed);
-		item.number_of_pedestrians_injured = Number(item.number_of_pedestrians_injured);
-		item.number_of_pedestrians_killed = Number(item.number_of_pedestrians_killed);
-		item.number_of_persons_injured = Number(item.number_of_persons_injured);
-		item.number_of_persons_killed = Number(item.number_of_persons_killed);
+		item.initial_cost = Number(item.initial_cost.replace(/[^0-9\.]+/g,"")).toFixed(2);
+		if(item.initial_cost == 0) {
+			item.initial_cost = ' ';
+		}
+		
+		
+		item.total_est__fee = Number(item.total_est__fee.replace(/[^0-9\.]+/g,"")).toFixed(2);
+		if(item.total_est__fee.isNumeric) {
+			item.total_est__fee = ' ';
+		}
 	});
 
 	console.log('data after corrections', data);
 	// group by array records on borough
 	var totalsByBorough = alasql(`
 		SELECT borough,
-			SUM(number_of_cyclist_injured) as number_of_cyclist_injured,
-			SUM(number_of_cyclist_killed) as number_of_cyclist_killed,
-			SUM(number_of_motorist_injured) as number_of_motorist_injured,
-			SUM(number_of_motorist_killed) as number_of_motorist_killed,
-			SUM(number_of_pedestrians_injured) as number_of_pedestrians_injured,
-			SUM(number_of_pedestrians_killed) as number_of_pedestrians_killed,
-			SUM(number_of_persons_injured) as number_of_persons_injured,
-			SUM(number_of_persons_killed) as number_of_persons_killed
+			COUNT(job__) as job_requested,
+			COUNT(assigned) as assigned,
+			COUNT(approved) as approved,
+			COUNT(fully_paid) as fully_paid
 		FROM ? GROUP BY borough`, [data]);
 
 	console.log('data after aggregation', totalsByBorough);
@@ -36,14 +34,10 @@ var updateChart = function(chart, data) {
 		json: totalsByBorough,
 		keys: {
 			x: 'borough',
-			value: ['number_of_cyclist_injured',
-			'number_of_cyclist_killed',
-			'number_of_motorist_injured',
-			'number_of_motorist_killed',
-			'number_of_pedestrians_injured',
-			'number_of_pedestrians_killed',
-			'number_of_persons_injured',
-			'number_of_persons_killed'],
+			value: ['job_requested',
+			'assigned',
+			'approved',
+			'fully_paid'],
 		},
 		type: 'bar'
 	});
@@ -51,33 +45,31 @@ var updateChart = function(chart, data) {
 
 if (Meteor.isClient) {
 	var chart;
-	Template.nypdData.events({
+	Template.dobjobData.events({
 		'submit .updateChart': function (event) {
       // Prevent default browser form submit
       event.preventDefault();
 
       // Get value from form element
       var limit = event.target.limit.value;
-			var date = event.target.date.value;
 
-			Meteor.call('getCollisionData', {
+			Meteor.call('getDOBJOBData', {
 				// pass limit and date parameters
-				// more info on fields at https://dev.socrata.com/foundry/#/data.cityofnewyork.us/qiz3-axqb
-					'$limit': limit,
-					date: date
+				// more info on fields at https://data.cityofnewyork.us/resource/rvhx-8trz.json
+					'$limit': limit
 				}, function (err, result) {
 					updateChart(chart, result.data);
 				});
     }
 	});
-	Template.nypdData.rendered = function () {
+	Template.dobjobData.rendered = function () {
 		// start with initial data
 		const initialData = [
 			{borough: 'UNKNOWN'},
 			{borough: 'MANHATTAN'},
 			{borough: 'BRONX'},
-      {borough: 'BROOKLYN'},
-      {borough: 'QUEENS'},
+			{borough: 'BROOKLYN'},
+			{borough: 'QUEENS'},
 			{borough: 'STATEN ISLAND'}
     ];
 		chart = c3.generate({
@@ -86,26 +78,18 @@ if (Meteor.isClient) {
 				json: initialData,
 				keys: {
 					x: 'borough',
-					value: ['number_of_cyclist_injured',
-					'number_of_cyclist_killed',
-					'number_of_motorist_injured',
-					'number_of_motorist_killed',
-					'number_of_pedestrians_injured',
-					'number_of_pedestrians_killed',
-					'number_of_persons_injured',
-					'number_of_persons_killed'],
+					value: ['job_requested',
+						'assigned',
+						'approved',
+						'fully_paid'],
 				},
 				type: 'bar',
 				// makes bars stack
 				groups: [
-					['number_of_cyclist_injured',
-						'number_of_cyclist_killed',
-						'number_of_motorist_injured',
-						'number_of_motorist_killed',
-						'number_of_pedestrians_injured',
-						'number_of_pedestrians_killed',
-						'number_of_persons_injured',
-						'number_of_persons_killed']
+					['job_requested',
+						'assigned',
+						'approved',
+						'fully_paid']
         ],
 				labels: true
 			},
@@ -121,14 +105,14 @@ if (Meteor.isClient) {
 
 if (Meteor.isServer) {
 	Meteor.methods({
-		getCollisionData(params) {
-			const collisionData = HTTP.call('GET', 'https://data.cityofnewyork.us/resource/qiz3-axqb.json', {
+		getDOBJOBData(params) {
+			const jobData = HTTP.call('GET', 'https://data.cityofnewyork.us/resource/rvhx-8trz.json', {
 				headers: {
-					'X-App-Token': ''
+					'X-App-Token': 'OHtMv1rX1n6MGFBi3AJVVyKQn'
 				},
 				params: params
 			});
-			return collisionData;
+			return jobData;
 		}
 	});
 }
