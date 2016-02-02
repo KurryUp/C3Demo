@@ -1,3 +1,5 @@
+var form_borough = "";
+
 var updateChart = function(chart, data) {
 	console.log('raw data', data);
 	_.each(data, function(item) {
@@ -8,36 +10,33 @@ var updateChart = function(chart, data) {
 
 		// converting strings to numbers
 		item.initial_cost = Number(item.initial_cost.replace(/[^0-9\.]+/g,"")).toFixed(2);
-		if(item.initial_cost == 0) {
-			item.initial_cost = ' ';
-		}
-		
-		
 		item.total_est__fee = Number(item.total_est__fee.replace(/[^0-9\.]+/g,"")).toFixed(2);
-		if(item.total_est__fee.isNumeric) {
-			item.total_est__fee = ' ';
-		}
 	});
-
+	
 	console.log('data after corrections', data);
 	// group by array records on borough
 	var totalsByBorough = alasql(`
-		SELECT borough,
-			COUNT(job__) as job_requested,
-			COUNT(assigned) as assigned,
-			COUNT(approved) as approved,
-			COUNT(fully_paid) as fully_paid
-		FROM ? GROUP BY borough`, [data]);
+		SELECT zoning_dist1,
+			AVG(total_est__fee) as total_est__fee
+		FROM ?
+		WHERE total_est__fee IS NOT NULL
+		  AND borough = ?
+		GROUP BY zoning_dist1`, [data, form_borough]);
 
 	console.log('data after aggregation', totalsByBorough);
 	chart.load({
 		json: totalsByBorough,
 		keys: {
-			x: 'borough',
-			value: ['job_requested',
-			'assigned',
-			'approved',
-			'fully_paid'],
+			x: 'zoning_dist1',
+			value: ['total_est__fee'],
+		},
+		axis: {
+			x: {
+				label: 'Zoning District'
+			},
+			y: {
+				label: 'Average Job Cost $USD'
+			}
 		},
 		type: 'bar'
 	});
@@ -52,7 +51,9 @@ if (Meteor.isClient) {
 
       // Get value from form element
       var limit = event.target.limit.value;
-
+	  form_borough = event.target.borough.value;
+	  console.log("Borough: "+ form_borough);
+	  
 			Meteor.call('getDOBJOBData', {
 				// pass limit and date parameters
 				// more info on fields at https://data.cityofnewyork.us/resource/rvhx-8trz.json
@@ -78,20 +79,21 @@ if (Meteor.isClient) {
 				json: initialData,
 				keys: {
 					x: 'borough',
-					value: ['job_requested',
-						'assigned',
-						'approved',
-						'fully_paid'],
+					value: ['total_est__fee'],
 				},
 				type: 'bar',
 				labels: true
 			},
 			axis: {
-        x: {
+				x: {
 					// x axis becomes the borough names
-          type: 'category'
-        }
-      }
+					type: 'category',
+					label: 'Zoning District'
+				},
+				y: {
+					label: 'Average Job Cost $USD'
+				}
+			}
 		});
 	};
 }
