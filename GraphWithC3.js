@@ -84,13 +84,6 @@ if (Meteor.isClient) {
 						'fully_paid'],
 				},
 				type: 'bar',
-				// makes bars stack
-				groups: [
-					['job_requested',
-						'assigned',
-						'approved',
-						'fully_paid']
-        ],
 				labels: true
 			},
 			axis: {
