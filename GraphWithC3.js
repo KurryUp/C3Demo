@@ -17,7 +17,7 @@ var updateChart = function(chart, data) {
 	// group by array records on borough
 	var totalsByBorough = alasql(`
 		SELECT zoning_dist1,
-			AVG(total_est__fee) as total_est__fee
+			SUM(total_est__fee) as total_est__fee
 		FROM ?
 		WHERE total_est__fee IS NOT NULL
 		  AND borough = ?
@@ -45,34 +45,29 @@ var updateChart = function(chart, data) {
 if (Meteor.isClient) {
 	var chart;
 	Template.dobjobData.events({
+		'change #borough': function(event, template) {
+			form_borough = template.$('#borough').val();
+			console.log("Borough: " + form_borough);
+		},
 		'submit .updateChart': function (event) {
-      // Prevent default browser form submit
-      event.preventDefault();
+			// Prevent default browser form submit
+			event.preventDefault();
 
-      // Get value from form element
-      var limit = event.target.limit.value;
-	  form_borough = event.target.borough.value;
-	  console.log("Borough: "+ form_borough);
+			// Get value from form element
+			var limit = event.target.limit.value;
 	  
 			Meteor.call('getDOBJOBData', {
 				// pass limit and date parameters
 				// more info on fields at https://data.cityofnewyork.us/resource/rvhx-8trz.json
 					'$limit': limit
 				}, function (err, result) {
-					updateChart(chart, result.data);
-				});
-    }
+				updateChart(chart, result.data);
+			});
+		}
 	});
 	Template.dobjobData.rendered = function () {
 		// start with initial data
-		const initialData = [
-			{borough: 'UNKNOWN'},
-			{borough: 'MANHATTAN'},
-			{borough: 'BRONX'},
-			{borough: 'BROOKLYN'},
-			{borough: 'QUEENS'},
-			{borough: 'STATEN ISLAND'}
-    ];
+		const initialData = [	];
 		chart = c3.generate({
 			bindto: this.find('#chart'), // binds chart to html div element with id 'chart'
 			data: {
