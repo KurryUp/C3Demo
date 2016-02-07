@@ -10,17 +10,20 @@ var updateChart = function(chart, data) {
 
 		// converting strings to numbers
 		item.initial_cost = Number(item.initial_cost.replace(/[^0-9\.]+/g,"")).toFixed(2);
-		item.total_est__fee = Number(item.total_est__fee.replace(/[^0-9\.]+/g,"")).toFixed(2);
+		item.total_est__fee = parseFloat(item.total_est__fee.replace(/[^0-9\.]+/g,""));
+		
+		var tempstr = item.zoning_dist1;
+		if(item.zoning_dist1 != undefined) {
+			item.zoning_dist1 = item.zoning_dist1.trim();
+		}
 	});
 	
 	console.log('data after corrections', data);
 	// group by array records on borough
 	var totalsByBorough = alasql(`
-		SELECT zoning_dist1,
-			SUM(total_est__fee) as total_est__fee
+		SELECT zoning_dist1, ROUND(AVG(total_est__fee), 2) as total_est__fee
 		FROM ?
-		WHERE total_est__fee IS NOT NULL
-		  AND borough = ?
+		WHERE borough = ?
 		GROUP BY zoning_dist1`, [data, form_borough]);
 
 	console.log('data after aggregation', totalsByBorough);
