@@ -3,11 +3,11 @@
 </head>
 
 <body>
-	<h1>DOB Job Application Cost vs Zone per Borough</h1> {{> dobjobData}} </body>
+	<h1>DOB Job Application Cost vs Zone per Borough</h1> {{> dobZoneData}} 
+</body>
 	
-<template name="dobjobData">
-	<div id="chart"></div>
-	<form class="updateChart">
+<template name="dobZoneData">
+	<form class="updateZone">
 		<input type="number" name="limit" placeholder="number of records" />
 		<select id="borough">
 		  <option disabled selected> --Select a borough-- </option>
@@ -18,5 +18,8 @@
 		  <option value="QUEENS">QUEENS</option>
 		</select>  
 		<input type="submit" value="Update">
-	</form>
+	</form><br>
+	<div id="chartBorough"></div>
+	<div id="chartZone"></div>
+	<div id="chartCity"></div>
 </template>
