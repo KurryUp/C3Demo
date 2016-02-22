@@ -1,6 +1,5 @@
 var form_borough = "";
 
-
 var updateCity = function(chartCity, data) {
 	console.log('raw data', data);
 	_.each(data, function(item) {
@@ -25,22 +24,28 @@ var updateCity = function(chartCity, data) {
 		FROM ?
 		GROUP BY borough`, [data]);
 
+	var test_array_JSONs = [
+    {"MANHATTAN":110302.63, "STATEN ISLAND":30618.59, "BROOKLYN":127866.25},
+	];	
+		
 	console.log('data after aggregation', jsonChartData);
+	var createBArray = new Array();
+	_.each(jsonChartData, function(item) {
+		var temp = new Object();
+		temp[item.borough] = item.initial_cost;
+		
+		createBArray.push(temp);
+	});
+	
+	var jsonSA = JSON.parse(JSON.stringify(createBArray));
+	
+	console.log('data after combine', jsonSA);
 	chartCity.load({
-		json: jsonChartData,
+		json: jsonSA,
 		keys: {
-			x: 'borough',
-			value: ['initial_cost'],
+			value: ['MANHATTAN', 'STATEN ISLAND', 'BROOKLYN', 'QUEENS', 'BRONX'],
 		},
-		axis: {
-			x: {
-				label: 'Borough'
-			},
-			y: {
-				label: 'Initial Cost $USD'
-			}
-		},
-		type: 'bar'
+		type: 'pie'		
 	});
 };
 
@@ -203,21 +208,10 @@ if (Meteor.isClient) {
 			data: {
 				json: initialData,
 				keys: {
-					x: 'city',
-					value: ['total_est__fee'],
+					value: ['MANHATTAN', 'STATEN ISLAND', 'BROOKLYN'],
 				},
 				type: 'bar',
 				labels: true
-			},
-			axis: {
-				x: {
-					// x axis becomes the borough names
-					type: 'category',
-					label: 'Cities'
-				},
-				y: {
-					label: 'Average Job Cost $USD'
-				}
 			}
 		});
 	};
